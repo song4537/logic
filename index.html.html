@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulate Logic Gate 2–10 Inputs</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  
+  body {
+    background: linear-gradient(135deg, #000010, #001122);
+    color: #0ff;
+    font-family: 'Orbitron', monospace, sans-serif;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: 
+      radial-gradient(circle at 20% 20%, rgba(0,255,255,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0,255,255,0.05) 0%, transparent 50%),
+      radial-gradient(#0ff3 1px, transparent 1px);
+    background-size: 800px 800px, 600px 600px, 50px 50px;
+    animation: backgroundMove 20s linear infinite;
+    z-index: 0;
+  }
+  
+  @keyframes backgroundMove {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 800px 800px, -600px -600px, 50px 50px; }
+  }
+  
+  body > * { position: relative; z-index: 1; }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(0,20,40,0.3);
+    border-radius: 20px;
+    padding: 30px;
+    border: 2px solid rgba(0,255,255,0.3);
+    box-shadow: 0 0 50px rgba(0,255,255,0.2);
+    backdrop-filter: blur(5px);
+  }
+  
+  h1 {
+    font-size: clamp(2em, 5vw, 4em);
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px #0ff, 0 0 40px #0ff;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: linear-gradient(45deg, #0ff, #00ffaa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+  }
+  
+  @keyframes titleGlow {
+    0% { text-shadow: 0 0 20px #0ff, 0 0 40px #0ff; }
+    100% { text-shadow: 0 0 30px #0ff, 0 0 60px #0ff, 0 0 80px #0ff; }
+  }
+  
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  
+  .control-group {
+    background: rgba(0,50,100,0.2);
+    border: 1px solid rgba(0,255,255,0.3);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(3px);
+  }
+  
+  .control-group h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    color: #00ffaa;
+  }
+  
+  .input-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .input-count label {
+    font-size: 1.1em;
+    min-width: 80px;
+  }
+  
+  .input-count input {
+    background: rgba(0,50,100,0.3);
+    border: 2px solid #0ff;
+    color: #0ff;
+    font-size: 1.2em;
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 80px;
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+  }
+  
+  .input-count input:focus {
+    outline: none;
+    box-shadow: 0 0 15px #0ff;
+  }
+  
+  .gate-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .gate-buttons button {
+    background: linear-gradient(145deg, #003344, #004466);
+    border: 2px solid #0ff;
+    color: #0ff;
+    font-size: 1.1em;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .gate-buttons button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.4), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .gate-buttons button:hover::before {
+    left: 100%;
+  }
+  
+  .gate-buttons button:hover,
+  .gate-buttons button.active {
+    background: linear-gradient(145deg, #0ff, #00aaff);
+    color: #000;
+    box-shadow: 0 0 30px #0ff;
+    transform: translateY(-2px);
+  }
+  
+  .inputs {
+    margin: 30px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .bit-btn {
+    background: linear-gradient(145deg, #002222, #003333);
+    border: 3px solid #0ff;
+    color: #0ff;
+    font-size: 1.5em;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .bit-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(0,255,255,0.3), transparent);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    transform: translate(-50%, -50%);
+  }
+  
+  .bit-btn.active::before {
+    width: 200%;
+    height: 200%;
+  }
+  
+  .bit-btn.active {
+    background: linear-gradient(145deg, #0ff, #00aaff);
+    color: #000;
+    box-shadow: 0 0 30px #0ff;
+    transform: scale(1.1);
+  }
+  
+  .bit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .wire {
+    margin: 30px auto;
+    width: 80%;
+    max-width: 600px;
+    height: 20px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #004466, #00ffee, #004466);
+    background-size: 200% 100%;
+    animation: wireFlow 2s linear infinite;
+    box-shadow: 0 0 30px #0ff;
+    position: relative;
+  }
+  
+  .wire::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(90deg, transparent, #0ff, transparent);
+    border-radius: 15px;
+    opacity: 0.5;
+    animation: wireGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes wireFlow {
+    0% { background-position: 0 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  @keyframes wireGlow {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.7; }
+  }
+  
+  .wire.inactive {
+    animation: none;
+    background: #003344;
+    box-shadow: none;
+  }
+  
+  .wire.inactive::before {
+    display: none;
+  }
+  
+  .output {
+    font-size: 5em;
+    margin: 30px 0;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 20px currentColor;
+  }
+  
+  .output.active {
+    color: #0f0;
+    text-shadow: 0 0 30px #0f0, 0 0 60px #0f0;
+    animation: outputPulse 1s ease-in-out infinite alternate;
+  }
+  
+  .output.inactive {
+    color: #666;
+    text-shadow: none;
+  }
+  
+  @keyframes outputPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+  }
+  
+  .truth-table-container {
+    background: rgba(0,30,60,0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 30px 0;
+    border: 1px solid rgba(0,255,255,0.3);
+    backdrop-filter: blur(3px);
+    overflow-x: auto;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .truth-table-container h3 {
+    margin: 0 0 20px 0;
+    color: #00ffaa;
+    font-size: 1.5em;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3em;
+    margin: 0 auto;
+  }
+  
+  th, td {
+    border: 2px solid #0ff;
+    padding: 15px 20px;
+    text-align: center;
+  }
+  
+  th {
+    background: linear-gradient(145deg, #004466, #006688);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  
+  tbody tr:hover {
+    background: rgba(0,255,255,0.15);
+  }
+  
+  tbody tr.active-row {
+    background: linear-gradient(135deg, #00ffaaaa, #00ffff44);
+    font-weight: 700;
+    color: #000;
+    box-shadow: inset 0 0 20px #0ff;
+  }
+  
+  @media (max-width: 768px) {
+    .bit-btn {
+      width: 70px;
+      height: 70px;
+      font-size: 1.1em;
+    }
+    
+    .gate-buttons button {
+      padding: 10px 12px;
+      font-size: 1em;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Simulate Logic Gate 2–10 Inputs</h1>
+  <div class="controls">
+    <div class="control-group">
+      <h3>เลือกจำนวนอินพุต (2–10)</h3>
+      <div class="input-count">
+        <input type="number" id="inputCount" min="2" max="10" value="3" />
+      </div>
+    </div>
+    <div class="control-group">
+      <h3>เลือก Logic Gate</h3>
+      <div class="gate-buttons" id="gateButtons">
+        <button data-gate="and" class="active">AND</button>
+        <button data-gate="or">OR</button>
+        <button data-gate="xor">XOR</button>
+        <button data-gate="not">NOT</button>
+        <button data-gate="nand">NAND</button>
+        <button data-gate="nor">NOR</button>
+        <button data-gate="xnor">XNOR</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inputs" id="inputs"></div>
+
+  <div class="wire" id="wire"></div>
+
+  <div class="output inactive" id="output">0</div>
+
+  <div class="truth-table-container" id="truthTableContainer">
+    <h3>ตารางความจริง</h3>
+    <table id="truthTable" aria-label="Truth Table">
+      <thead>
+        <tr id="truthTableHeader"></tr>
+      </thead>
+      <tbody id="truthTableBody"></tbody>
+    </table>
+  </div>
+
+  <footer style="color:#0ff; font-size: 0.9em; margin-top: 40px;">
+    ณัฐริกา เรืองจันทร์ | นาฏตยา สุขสด
+  </footer>
+</div>
+
+<script>
+  const inputCountInput = document.getElementById('inputCount');
+  const inputsDiv = document.getElementById('inputs');
+  const gateButtons = document.getElementById('gateButtons');
+  const outputDiv = document.getElementById('output');
+  const wireDiv = document.getElementById('wire');
+  const truthTableHeader = document.getElementById('truthTableHeader');
+  const truthTableBody = document.getElementById('truthTableBody');
+
+  let currentGate = 'and';
+  let inputCount = parseInt(inputCountInput.value);
+  let inputValues = [];
+
+  // สร้างปุ่มอินพุตตามจำนวน
+  function createInputs(count) {
+    inputsDiv.innerHTML = '';
+    inputValues = new Array(count).fill(0);
+
+    for (let i = 0; i < count; i++) {
+      const btn = document.createElement('button');
+      btn.classList.add('bit-btn');
+      btn.textContent = '0';
+      btn.setAttribute('aria-label', `Input bit ${i + 1}, value 0`);
+      btn.addEventListener('click', () => {
+        inputValues[i] = inputValues[i] === 0 ? 1 : 0;
+        btn.textContent = inputValues[i];
+        btn.setAttribute('aria-label', `Input bit ${i + 1}, value ${inputValues[i]}`);
+        btn.classList.toggle('active', inputValues[i] === 1);
+        calculateOutput();
+        updateTruthTable();
+      });
+      inputsDiv.appendChild(btn);
+    }
+  }
+
+  // เลือกเกต
+  function selectGate(gate) {
+    currentGate = gate;
+    // update active button
+    [...gateButtons.children].forEach(btn => btn.classList.toggle('active', btn.dataset.gate === gate));
+    resetInputs();
+    calculateOutput();
+    updateTruthTable();
+  }
+
+  // รีเซ็ตอินพุตเป็น 0 ทั้งหมด
+  function resetInputs() {
+    inputValues.fill(0);
+    [...inputsDiv.children].forEach(btn => {
+      btn.textContent = '0';
+      btn.classList.remove('active');
+      btn.setAttribute('aria-label', btn.getAttribute('aria-label').replace(/\d$/, '0'));
+    });
+  }
+
+  // คำนวณ output ตาม logic gate และ input values
+  function calculateOutput() {
+    let result;
+
+    if (currentGate === 'not') {
+      result = inputValues[0] === 0 ? 1 : 0;
+    } else {
+      switch (currentGate) {
+        case 'and':
+          result = inputValues.reduce((acc, val) => acc & val, 1);
+          break;
+        case 'or':
+          result = inputValues.reduce((acc, val) => acc | val, 0);
+          break;
+        case 'xor':
+          result = inputValues.reduce((acc, val) => acc ^ val, 0);
+          break;
+        case 'nand':
+          result = inputValues.reduce((acc, val) => acc & val, 1) ? 0 : 1;
+          break;
+        case 'nor':
+          result = inputValues.reduce((acc, val) => acc | val, 0) ? 0 : 1;
+          break;
+        case 'xnor':
+          result = inputValues.reduce((acc, val) => acc ^ val, 0) ? 0 : 1;
+          break;
+        default:
+          result = 0;
+      }
+    }
+
+    outputDiv.textContent = result;
+    if (result === 1) {
+      outputDiv.classList.add('active');
+      outputDiv.classList.remove('inactive');
+      wireDiv.classList.remove('inactive');
+    } else {
+      outputDiv.classList.add('inactive');
+      outputDiv.classList.remove('active');
+      wireDiv.classList.add('inactive');
+    }
+  }
+
+  // อัพเดตตารางความจริงแบบแถวเดียว
+  function updateTruthTable() {
+    truthTableHeader.innerHTML = '';
+    truthTableBody.innerHTML = '';
+
+    // สร้างหัวตาราง อินพุตแต่ละบิต + ผลลัพธ์
+    for (let i = 0; i < inputCount; i++) {
+      const th = document.createElement('th');
+      th.textContent = `อินพุต ${i + 1}`;
+      truthTableHeader.appendChild(th);
+    }
+    const outTh = document.createElement('th');
+    outTh.textContent = 'ผลลัพธ์';
+    truthTableHeader.appendChild(outTh);
+
+    // สร้างแถวเดียวของตาราง (เฉพาะอินพุตปัจจุบัน)
+    const tr = document.createElement('tr');
+
+    // อินพุตแต่ละบิต
+    for (let i = 0; i < inputCount; i++) {
+      const td = document.createElement('td');
+      td.textContent = inputValues[i];
+      tr.appendChild(td);
+    }
+
+    // ผลลัพธ์
+    let rowOutput;
+    if (currentGate === 'not') {
+      rowOutput = inputValues[0] === 0 ? 1 : 0;
+    } else {
+      switch (currentGate) {
+        case 'and':
+          rowOutput = inputValues.reduce((acc, val) => acc & val, 1);
+          break;
+        case 'or':
+          rowOutput = inputValues.reduce((acc, val) => acc | val, 0);
+          break;
+        case 'xor':
+          rowOutput = inputValues.reduce((acc, val) => acc ^ val, 0);
+          break;
+        case 'nand':
+          rowOutput = inputValues.reduce((acc, val) => acc & val, 1) ? 0 : 1;
+          break;
+        case 'nor':
+          rowOutput = inputValues.reduce((acc, val) => acc | val, 0) ? 0 : 1;
+          break;
+        case 'xnor':
+          rowOutput = inputValues.reduce((acc, val) => acc ^ val, 0) ? 0 : 1;
+          break;
+        default:
+          rowOutput = 0;
+      }
+    }
+    const tdOut = document.createElement('td');
+    tdOut.textContent = rowOutput;
+    tr.appendChild(tdOut);
+
+    truthTableBody.appendChild(tr);
+  }
+
+  // ปรับอินพุตตามจำนวน
+  function updateInputCount() {
+    let val = parseInt(inputCountInput.value);
+    if (isNaN(val) || val < 2) val = 2;
+    else if (val > 10) val = 10;
+    inputCountInput.value = val;
+    inputCount = val;
+
+    if (currentGate === 'not') {
+      inputCount = 1;
+      inputCountInput.value = 1;
+      inputCountInput.disabled = true;
+    } else {
+      inputCountInput.disabled = false;
+    }
+
+    createInputs(inputCount);
+    calculateOutput();
+    updateTruthTable();
+  }
+
+  // event listeners
+  inputCountInput.addEventListener('change', updateInputCount);
+
+  gateButtons.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON') {
+      selectGate(e.target.dataset.gate);
+    }
+  });
+
+  // เริ่มต้น
+  updateInputCount();
+  selectGate(currentGate);
+</script>
+</body>
+</html>
